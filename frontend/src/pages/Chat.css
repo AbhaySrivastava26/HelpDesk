@@ -59,3 +59,98 @@
 .btn-send { padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; height: 42px; }
 .btn-send:hover:not(:disabled) { opacity: 0.9; }
 .btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* How-to banner */
+.how-to-banner {
+  display: flex; align-items: flex-start; flex-wrap: wrap; gap: 8px;
+  background: white; border-radius: 10px; padding: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+.how-step {
+  flex: 1; min-width: 140px; display: flex; gap: 10px;
+  align-items: flex-start; font-size: 0.82rem; color: #444; line-height: 1.5;
+}
+.how-step strong { display: block; font-size: 0.85rem; color: #222; margin-bottom: 2px; }
+.how-num {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white; font-size: 0.72rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.how-arrow { font-size: 1.2rem; color: #ccc; align-self: center; }
+
+/* Agent picker extras */
+.agent-selected { gap: 8px; }
+.agent-id-tag {
+  font-size: 0.72rem; font-weight: 700; padding: 2px 7px;
+  border-radius: 4px; flex-shrink: 0; font-family: monospace;
+}
+.agent-dropdown { min-width: 380px; }
+.agent-team-tabs {
+  display: flex; flex-wrap: wrap; gap: 6px; padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+.team-tab {
+  padding: 4px 12px; border: 1px solid #ddd; border-radius: 20px;
+  font-size: 0.78rem; cursor: pointer; background: white;
+  color: #555; transition: all 0.12s;
+}
+.team-tab:hover { background: #f5f3ff; }
+.team-tab.active { font-weight: 600; border-width: 1.5px; background: #fafafa; }
+.agent-offline { opacity: 0.45; cursor: not-allowed !important; }
+.status-dot-sm { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+/* Agent team banner after connect */
+.agent-team-banner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0.75rem 1.1rem; border-radius: 8px;
+  font-size: 0.88rem;
+}
+
+/* Searching spinner */
+.searching-banner {
+  display: flex; align-items: center; gap: 12px;
+  background: #f5f3ff; border: 1px solid #ddd6fe;
+  border-radius: 10px; padding: 1rem 1.25rem;
+}
+.searching-spinner {
+  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+  border: 2.5px solid #ddd6fe; border-top-color: #7c3aed;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.searching-title { font-weight: 600; font-size: 0.9rem; color: #5b21b6; }
+.searching-sub   { font-size: 0.78rem; color: #7c3aed; margin-top: 2px; }
+
+/* Assigned agent card */
+.assigned-agent-card {
+  display: flex; align-items: center; gap: 14px;
+  background: white; border-radius: 10px; padding: 1rem 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.assigned-avatar {
+  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; font-weight: 700;
+}
+.assigned-info { flex: 1; }
+.assigned-name     { font-weight: 600; font-size: 1rem; margin-bottom: 2px; }
+.assigned-team     { font-size: 0.82rem; color: #555; }
+.assigned-specialty{ font-size: 0.78rem; color: #888; }
+.assigned-status   { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #15803d; font-weight: 500; }
+.online-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
+
+/* Agent joined message */
+.msg-agent-joined {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: white; border: 1.5px solid; border-radius: 10px;
+  padding: 1rem; margin: 4px 0;
+}
+.agent-joined-icon {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+}
+.agent-joined-info { flex: 1; }
+.agent-joined-name { font-weight: 600; font-size: 0.95rem; }
+.agent-joined-meta { font-size: 0.78rem; color: #888; margin: 2px 0 6px; }
+.agent-joined-text { font-size: 0.85rem; color: #444; line-height: 1.5; }
