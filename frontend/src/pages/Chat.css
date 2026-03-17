@@ -154,3 +154,9 @@
 .agent-joined-name { font-weight: 600; font-size: 0.95rem; }
 .agent-joined-meta { font-size: 0.78rem; color: #888; margin: 2px 0 6px; }
 .agent-joined-text { font-size: 0.85rem; color: #444; line-height: 1.5; }
+
+.auto-opened-banner {
+  background: #f0fdf4; border: 1px solid #bbf7d0;
+  color: #166534; border-radius: 8px;
+  padding: 0.65rem 1rem; font-size: 0.85rem;
+}

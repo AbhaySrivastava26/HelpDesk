@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard'
 import Analytics from './pages/Analytics'
 import Chat from './pages/Chat'
 import Teams from './pages/Teams'
+import AgentDashboard from './pages/AgentDashboard'
+import PasswordGate from './components/PasswordGate'
 import './App.css'
 
 function App() {
@@ -13,11 +15,43 @@ function App() {
       <Navbar />
       <div className="main">
         <Routes>
-          <Route path="/"          element={<SubmitTicket />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/chat"      element={<Chat />} />
-          <Route path="/teams"     element={<Teams />} />
+          {/* Submit ticket — password protected */}
+          <Route path="/" element={
+            <PasswordGate pageName="HelpIQ — Submit Ticket" icon="🎫">
+              <SubmitTicket />
+            </PasswordGate>
+          }/>
+
+          {/* Dashboard — password protected */}
+          <Route path="/dashboard" element={
+            <PasswordGate pageName="Ticket Dashboard" icon="📊">
+              <Dashboard />
+            </PasswordGate>
+          }/>
+
+          {/* Chat — password protected */}
+          <Route path="/chat" element={
+            <PasswordGate pageName="Live Support Chat" icon="💬">
+              <Chat />
+            </PasswordGate>
+          }/>
+
+          {/* Teams — password protected */}
+          <Route path="/teams" element={
+            <PasswordGate pageName="Help Desk Teams" icon="👥">
+              <Teams />
+            </PasswordGate>
+          }/>
+
+          {/* Analytics — password protected */}
+          <Route path="/analytics" element={
+            <PasswordGate pageName="Analytics Dashboard" icon="📈">
+              <Analytics />
+            </PasswordGate>
+          }/>
+
+          {/* Agent Portal — has its own password gate inside the component */}
+          <Route path="/agent" element={<AgentDashboard />}/>
         </Routes>
       </div>
     </BrowserRouter>
