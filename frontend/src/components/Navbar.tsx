@@ -9,6 +9,7 @@ export default function Navbar() {
         <div className="nav-menu">
           <Link to="/" className="nav-link">Submit</Link>
           <Link to="/dashboard" className="nav-link">Dashboard</Link>
+          <Link to="/chat" className="nav-link">💬 Chat</Link>
           <Link to="/analytics" className="nav-link">Analytics</Link>
         </div>
       </div>

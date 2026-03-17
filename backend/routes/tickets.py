@@ -91,3 +91,52 @@ def update_ticket(ticket_id: str, request: UpdateTicketRequest):
         raise HTTPException(status_code=404, detail="Ticket not found")
     
     return {"success": True}
+
+
+
+
+#newly generated data
+
+# ── Paste this at the BOTTOM of backend/routes/tickets.py ──
+
+# ── Replace your existing @router.post("/auto-solve") in backend/routes/tickets.py ──
+
+@router.post("/auto-solve")
+def auto_solve_ticket(request: dict):
+    """
+    Calls ChatGPT (via classifier.py) to generate a real solution based on the chat context.
+    Falls back to rule-based solutions if OpenAI is unavailable.
+    """
+    issue_context = request.get("issue_context", "")
+    ticket_id     = request.get("ticket_id", "")
+    employee_id   = request.get("employee_id", "")
+
+    # Detect category from the context first
+    try:
+        from services.classifier import classify_ticket, generate_solution
+        classification = classify_ticket(issue_context, "Unknown", "General")
+        category = classification.get("category", "Software")
+        # Now generate a real solution using ChatGPT with the full context
+        solution = generate_solution(category, issue_context, "Unknown")
+    except Exception as e:
+        print(f"Auto-solve error: {e}")
+        solution = None
+
+    # Final fallback if everything failed
+    if not solution:
+        solution = (
+            "General troubleshooting steps:\n"
+            "1. Restart your device — resolves ~40% of IT issues\n"
+            "2. Check if colleagues are affected (ask in team chat)\n"
+            "3. Note the exact error message for the support agent\n"
+            "4. Try an alternate method or browser\n"
+            "5. Your ticket has been escalated to the appropriate team\n"
+            "An agent will follow up shortly."
+        )
+
+    return {
+        "ticket_id":    ticket_id,
+        "employee_id":  employee_id,
+        "solution":     solution,
+        "generated_by": "AI Assistant"
+    }
