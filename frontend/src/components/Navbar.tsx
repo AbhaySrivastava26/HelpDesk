@@ -7,9 +7,10 @@ export default function Navbar() {
       <div className="nav-container">
         <Link to="/" className="nav-logo">⚡ HelpIQ</Link>
         <div className="nav-menu">
-          <Link to="/" className="nav-link">Submit</Link>
+          <Link to="/"          className="nav-link">Submit</Link>
           <Link to="/dashboard" className="nav-link">Dashboard</Link>
-          <Link to="/chat" className="nav-link">💬 Chat</Link>
+          <Link to="/chat"      className="nav-link">💬 Chat</Link>
+          <Link to="/teams"     className="nav-link">👥 Teams</Link>
           <Link to="/analytics" className="nav-link">Analytics</Link>
         </div>
       </div>
