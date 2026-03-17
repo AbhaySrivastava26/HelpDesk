@@ -1,0 +1,32 @@
+.analytics {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.analytics h1 {
+  color: #333;
+  margin-bottom: 2rem;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+}
+
+.chart-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.chart-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.chart-card h3 {
+  margin-top: 0;
+  color: #333;
+}
