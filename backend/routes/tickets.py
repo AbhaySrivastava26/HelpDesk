@@ -9,6 +9,12 @@ import uuid
 
 router = APIRouter()
 
+@router.get("/employees")
+def get_all_employees():
+    """Returns all employees for the chat dropdown."""
+    from data.employees import EMPLOYEES_DATA
+    return {"employees": EMPLOYEES_DATA}
+
 @router.post("/create")
 def create_ticket(request: CreateTicketRequest):
     db = get_db()

@@ -12,14 +12,54 @@ interface Message {
   specialty?: string; color?: string; icon?: string
 }
 
-interface Employee { employee_id: string; employee_name: string; department: string; location: string }
+interface Employee {
+  employee_id: string
+  employee_name: string
+  department: string
+  location: string
+}
+
+const DEMO_PASSWORD = 'abcd'
+
+const FALLBACK_EMP: Employee[] = [
+  { employee_id: 'EMP-10000', employee_name: 'Rajesh Kumar',     department: 'Operations',       location: 'Delhi' },
+  { employee_id: 'EMP-10001', employee_name: 'Priya Singh',      department: 'Marketing',        location: 'Bangalore' },
+  { employee_id: 'EMP-10002', employee_name: 'Amit Patel',       department: 'Finance',          location: 'Bangalore' },
+  { employee_id: 'EMP-10003', employee_name: 'Neha Sharma',      department: 'HR',               location: 'Hyderabad' },
+  { employee_id: 'EMP-10004', employee_name: 'Abhay Srivastava', department: 'Engineering',      location: 'Bangalore' },
+  { employee_id: 'EMP-10005', employee_name: 'Deepak Nair',      department: 'Legal',            location: 'Mumbai' },
+  { employee_id: 'EMP-10006', employee_name: 'Ananya Gupta',     department: 'Procurement',      location: 'Hyderabad' },
+  { employee_id: 'EMP-10007', employee_name: 'Vikram Reddy',     department: 'Marketing',        location: 'Delhi' },
+  { employee_id: 'EMP-10008', employee_name: 'Sneha Desai',      department: 'Legal',            location: 'Hyderabad' },
+  { employee_id: 'EMP-10009', employee_name: 'Rohan Verma',      department: 'Operations',       location: 'Hyderabad' },
+  { employee_id: 'EMP-10010', employee_name: 'Varun Kapoor',     department: 'Operations',       location: 'Bangalore' },
+  { employee_id: 'EMP-10011', employee_name: 'Pooja Menon',      department: 'HR',               location: 'Bangalore' },
+  { employee_id: 'EMP-10012', employee_name: 'Arjun Rao',        department: 'HR',               location: 'Bangalore' },
+  { employee_id: 'EMP-10013', employee_name: 'Sanjana Bhat',     department: 'Legal',            location: 'Pune' },
+  { employee_id: 'EMP-10014', employee_name: 'Karthik Iyer',     department: 'Engineering',      location: 'Hyderabad' },
+  { employee_id: 'EMP-10015', employee_name: 'Divya Krishnan',   department: 'Procurement',      location: 'Bangalore' },
+  { employee_id: 'EMP-10016', employee_name: 'Suresh Pillai',    department: 'Finance',          location: 'Pune' },
+  { employee_id: 'EMP-10017', employee_name: 'Meera Nair',       department: 'HR',               location: 'Delhi' },
+  { employee_id: 'EMP-10018', employee_name: 'Nikhil Deshmukh',  department: 'Procurement',      location: 'Hyderabad' },
+  { employee_id: 'EMP-10019', employee_name: 'Shreya Mishra',    department: 'Procurement',      location: 'Mumbai' },
+  { employee_id: 'EMP-10020', employee_name: 'Aryan Sinha',      department: 'Customer Support', location: 'Hyderabad' },
+  { employee_id: 'EMP-10021', employee_name: 'Ritika Joshi',     department: 'Marketing',        location: 'Bangalore' },
+  { employee_id: 'EMP-10022', employee_name: 'Harsh Pandey',     department: 'HR',               location: 'Delhi' },
+  { employee_id: 'EMP-10023', employee_name: 'Kavya Saxena',     department: 'Procurement',      location: 'Bangalore' },
+  { employee_id: 'EMP-10024', employee_name: 'Anurag Sharma',    department: 'Engineering',      location: 'Pune' },
+]
 
 export default function Chat() {
   const [searchParams] = useSearchParams()
 
+  // ── form state ──
   const [ticketId, setTicketId]   = useState('')
   const [userId, setUserId]       = useState('')
   const [role, setRole]           = useState<'employee'|'admin'>('employee')
+  const [password, setPassword]   = useState('')
+  const [pwError, setPwError]     = useState('')
+
+  // ── connection state ──
   const [connected, setConnected] = useState(false)
   const [messages, setMessages]   = useState<Message[]>([])
   const [input, setInput]         = useState('')
@@ -27,52 +67,25 @@ export default function Chat() {
   const [searching, setSearching] = useState(false)
   const [assignedAgent, setAssignedAgent] = useState<any>(null)
 
-  const [employees, setEmployees]     = useState<Employee[]>([])
+  // ── employee picker ──
+  const [employees, setEmployees]     = useState<Employee[]>(FALLBACK_EMP)
   const [showEmpList, setShowEmpList] = useState(false)
   const [empSearch, setEmpSearch]     = useState('')
 
-  const ws      = useRef<WebSocket | null>(null)
-  const bottom  = useRef<HTMLDivElement | null>(null)
-  const session = useRef<string>('')
-
-  // ── hold latest connect fn in a ref so the URL-param effect can call it ──
-  const connectFn = useRef<(() => void) | null>(null)
+  const ws         = useRef<WebSocket | null>(null)
+  const bottom     = useRef<HTMLDivElement | null>(null)
+  const session    = useRef<string>('')
+  const connectFn  = useRef<((t?: string, u?: string, r?: 'employee'|'admin') => void) | null>(null)
 
   useEffect(() => { bottom.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
   useEffect(() => () => { ws.current?.close() }, [])
 
-  const FALLBACK_EMP: Employee[] = [
-    { employee_id: 'EMP-10000', employee_name: 'Rajesh Kumar',     department: 'Operations',       location: 'Delhi' },
-    { employee_id: 'EMP-10001', employee_name: 'Priya Singh',      department: 'Marketing',        location: 'Bangalore' },
-    { employee_id: 'EMP-10002', employee_name: 'Amit Patel',       department: 'Finance',          location: 'Bangalore' },
-    { employee_id: 'EMP-10003', employee_name: 'Neha Sharma',      department: 'HR',               location: 'Hyderabad' },
-    { employee_id: 'EMP-10004', employee_name: 'Abhay Srivastava', department: 'Engineering',      location: 'Bangalore' },
-    { employee_id: 'EMP-10005', employee_name: 'Deepak Nair',      department: 'Legal',            location: 'Mumbai' },
-    { employee_id: 'EMP-10006', employee_name: 'Ananya Gupta',     department: 'Procurement',      location: 'Hyderabad' },
-    { employee_id: 'EMP-10007', employee_name: 'Vikram Reddy',     department: 'Marketing',        location: 'Delhi' },
-    { employee_id: 'EMP-10008', employee_name: 'Sneha Desai',      department: 'Legal',            location: 'Hyderabad' },
-    { employee_id: 'EMP-10009', employee_name: 'Rohan Verma',      department: 'Operations',       location: 'Hyderabad' },
-    { employee_id: 'EMP-10010', employee_name: 'Varun Kapoor',     department: 'Operations',       location: 'Bangalore' },
-    { employee_id: 'EMP-10011', employee_name: 'Pooja Menon',      department: 'HR',               location: 'Bangalore' },
-    { employee_id: 'EMP-10012', employee_name: 'Arjun Rao',        department: 'HR',               location: 'Bangalore' },
-    { employee_id: 'EMP-10013', employee_name: 'Sanjana Bhat',     department: 'Legal',            location: 'Pune' },
-    { employee_id: 'EMP-10014', employee_name: 'Karthik Iyer',     department: 'Engineering',      location: 'Hyderabad' },
-    { employee_id: 'EMP-10015', employee_name: 'Divya Krishnan',   department: 'Procurement',      location: 'Bangalore' },
-    { employee_id: 'EMP-10016', employee_name: 'Suresh Pillai',    department: 'Finance',          location: 'Pune' },
-    { employee_id: 'EMP-10017', employee_name: 'Meera Nair',       department: 'HR',               location: 'Delhi' },
-    { employee_id: 'EMP-10018', employee_name: 'Nikhil Deshmukh',  department: 'Procurement',      location: 'Hyderabad' },
-    { employee_id: 'EMP-10019', employee_name: 'Shreya Mishra',    department: 'Procurement',      location: 'Mumbai' },
-    { employee_id: 'EMP-10020', employee_name: 'Aryan Sinha',      department: 'Customer Support', location: 'Hyderabad' },
-    { employee_id: 'EMP-10021', employee_name: 'Ritika Joshi',     department: 'Marketing',        location: 'Bangalore' },
-    { employee_id: 'EMP-10022', employee_name: 'Harsh Pandey',     department: 'HR',               location: 'Delhi' },
-    { employee_id: 'EMP-10023', employee_name: 'Kavya Saxena',     department: 'Procurement',      location: 'Bangalore' },
-    { employee_id: 'EMP-10024', employee_name: 'Anurag Sharma',    department: 'Engineering',      location: 'Pune' },
-  ]
-
+  // fetch employees — fallback already set
   useEffect(() => {
     fetch('http://localhost:8000/api/tickets/employees')
-      .then(r => r.json()).then(d => setEmployees(d.employees || FALLBACK_EMP))
-      .catch(() => setEmployees(FALLBACK_EMP))
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.employees?.length) setEmployees(d.employees) })
+      .catch(() => {})
   }, [])
 
   const filteredEmp = employees.filter(e =>
@@ -81,11 +94,11 @@ export default function Chat() {
     e.department.toLowerCase().includes(empSearch.toLowerCase())
   )
 
-  // ── Core connect function ──
-  const connect = useCallback((overrideTicket?: string, overrideUser?: string, overrideRole?: 'employee'|'admin') => {
-    const tid  = overrideTicket || ticketId
-    const uid  = overrideUser   || userId
-    const rl   = overrideRole   || role
+  // ── connect ──
+  const connect = useCallback((overTid?: string, overUid?: string, overRole?: 'employee'|'admin') => {
+    const tid = overTid  || ticketId
+    const uid = overUid  || userId
+    const rl  = overRole || role
     if (!tid.trim() || !uid.trim()) return
 
     ws.current?.close()
@@ -119,32 +132,36 @@ export default function Chat() {
     socket.onerror = () => { if (session.current !== thisSession) return; setConnected(false); setSearching(false) }
   }, [ticketId, userId, role])
 
-  // Keep ref in sync so URL-param effect can call it
   useEffect(() => { connectFn.current = connect }, [connect])
 
-  // ── AUTO-CONNECT when coming from Agent Portal ──
+  // ── auto-connect from agent portal URL params ──
   useEffect(() => {
     const ticketParam = searchParams.get('ticket')
     const agentParam  = searchParams.get('agent')
     if (!ticketParam) return
-
-    // Pre-fill fields
     setTicketId(ticketParam)
-    if (agentParam) {
-      setRole('admin')
-      setUserId(agentParam)
-    }
-
-    // Wait one tick for state to flush, then connect
+    if (agentParam) { setRole('admin'); setUserId(agentParam) }
+    // auto-connect skips password (agent portal already authenticated)
     setTimeout(() => {
       connectFn.current?.(ticketParam, agentParam || undefined, agentParam ? 'admin' : 'employee')
     }, 150)
-  }, [])   // eslint-disable-line react-hooks/exhaustive-deps
+  }, []) // eslint-disable-line
+
+  const handleConnect = () => {
+    // validate password before connecting
+    if (password !== DEMO_PASSWORD) {
+      setPwError('Wrong password. Use: abcd')
+      return
+    }
+    setPwError('')
+    connect()
+  }
 
   const disconnect = () => {
     session.current = ''
     ws.current?.close(); ws.current = null
     setConnected(false); setMessages([]); setAssignedAgent(null); setSearching(false)
+    setPassword(''); setPwError('')
   }
 
   const sendMessage = () => {
@@ -178,16 +195,18 @@ export default function Chat() {
 
   const renderMessage = (msg: Message, idx: number) => {
     const isMe = msg.sender_id === userId
-    if (msg.type === 'system') return <div key={idx} className="msg-system"><span>{msg.text}</span></div>
+    if (msg.type === 'system') return (
+      <div key={idx} className="msg-system"><span>{msg.text}</span></div>
+    )
     if (msg.type === 'agent_joined') return (
       <div key={idx} className="msg-agent-joined" style={{ borderColor: msg.color || '#667eea' }}>
-        <div className="agent-joined-icon" style={{ background: (msg.color || '#667eea') + '15' }}><span>{msg.icon}</span></div>
+        <div className="agent-joined-icon" style={{ background: (msg.color||'#667eea')+'15' }}><span>{msg.icon}</span></div>
         <div className="agent-joined-info">
-          <div className="agent-joined-name" style={{ color: msg.color || '#667eea' }}>{msg.agent_name}</div>
+          <div className="agent-joined-name" style={{ color: msg.color||'#667eea' }}>{msg.agent_name}</div>
           <div className="agent-joined-meta">{msg.team_name} · {msg.specialty}</div>
           <div className="agent-joined-text">{msg.text}</div>
         </div>
-        <span className="msg-time" style={{ alignSelf: 'flex-start' }}>{msg.timestamp}</span>
+        <span className="msg-time" style={{ alignSelf:'flex-start' }}>{msg.timestamp}</span>
       </div>
     )
     if (msg.type === 'auto_solve') return (
@@ -207,81 +226,121 @@ export default function Chat() {
     )
   }
 
-  const selectedEmp = employees.find(e => e.employee_id === userId)
-  // Was this page opened from agent portal?
-  const isAutoOpened = !!searchParams.get('ticket') && !!searchParams.get('agent')
+  const selectedEmp   = employees.find(e => e.employee_id === userId)
+  const isAutoOpened  = !!searchParams.get('ticket') && !!searchParams.get('agent')
 
   return (
     <div className="chat-page">
       <div className="chat-container">
         <div className="chat-title"><span>💬</span><h1>Live Support Chat</h1></div>
 
-        {/* Auto-opened banner — shown when agent clicked from portal */}
+        {/* Auto-opened banner */}
         {isAutoOpened && connected && (
           <div className="auto-opened-banner">
-            ✅ Chat opened directly from your Agent Portal — you are connected as <strong>{userId}</strong>
+            ✅ Chat opened directly from your Agent Portal — connected as <strong>{userId}</strong>
           </div>
         )}
 
-        {/* How-to — only for manual opens */}
+        {/* How-to */}
         {!connected && !isAutoOpened && (
           <div className="how-to-banner">
-            <div className="how-step"><div className="how-num">1</div><div><strong>Get your Ticket ID</strong><br/>Go to Dashboard, copy the ID of your ticket</div></div>
+            <div className="how-step"><div className="how-num">1</div><div><strong>Get Ticket ID</strong><br/>From the Dashboard after submitting</div></div>
             <div className="how-arrow">→</div>
-            <div className="how-step"><div className="how-num">2</div><div><strong>Select yourself</strong><br/>Choose Employee role and pick your name</div></div>
+            <div className="how-step"><div className="how-num">2</div><div><strong>Select yourself</strong><br/>Pick your employee name</div></div>
             <div className="how-arrow">→</div>
-            <div className="how-step"><div className="how-num">3</div><div><strong>Click Connect</strong><br/>The right help desk agent is assigned automatically</div></div>
+            <div className="how-step"><div className="how-num">3</div><div><strong>Enter password</strong><br/>Type <code style={{background:'#f0f0f0',padding:'1px 5px',borderRadius:4}}>abcd</code> and connect</div></div>
           </div>
         )}
 
-        {/* Connect bar */}
+        {/* ── Connect bar ── */}
         <div className="chat-connect-bar">
-          <input className="connect-input" placeholder="Ticket ID (from Dashboard)"
-            value={ticketId} onChange={e => setTicketId(e.target.value)} disabled={connected} />
 
-          <select className="connect-select" value={role}
-            onChange={e => { setRole(e.target.value as 'employee'|'admin'); setUserId('') }} disabled={connected}>
-            <option value="employee">Employee</option>
-            <option value="admin">Help Desk Admin</option>
-          </select>
+          {/* Row 1: ticket + role + employee */}
+          <div className="connect-row-top">
+            <input
+              className="connect-input"
+              placeholder="Ticket ID (from Dashboard)"
+              value={ticketId}
+              onChange={e => setTicketId(e.target.value)}
+              disabled={connected}
+            />
 
-          {role === 'employee' ? (
-            <div className="emp-picker">
-              <div className="emp-selected" onClick={() => !connected && setShowEmpList(v => !v)}>
-                {userId ? <><span className="emp-id-tag">{userId}</span> {selectedEmp?.employee_name}</> : <span className="emp-placeholder">Select your name...</span>}
-                {!connected && <span className="emp-caret">▾</span>}
-              </div>
-              {showEmpList && !connected && (
-                <div className="emp-dropdown">
-                  <input className="emp-search" placeholder="Search..." value={empSearch} onChange={e => setEmpSearch(e.target.value)} autoFocus />
-                  <div className="emp-list">
-                    {filteredEmp.map(emp => (
-                      <div key={emp.employee_id} className={`emp-item ${userId === emp.employee_id ? 'selected' : ''}`}
-                        onClick={() => { setUserId(emp.employee_id); setShowEmpList(false); setEmpSearch('') }}>
-                        <span className="emp-id-tag">{emp.employee_id}</span>
-                        <span className="emp-name">{emp.employee_name}</span>
-                        <span className="emp-meta">{emp.department} · {emp.location}</span>
-                      </div>
-                    ))}
-                    {filteredEmp.length === 0 && <div className="emp-loading">No results</div>}
-                  </div>
-                  <button className="emp-close" onClick={() => setShowEmpList(false)}>Close</button>
+            <select className="connect-select" value={role}
+              onChange={e => { setRole(e.target.value as 'employee'|'admin'); setUserId('') }}
+              disabled={connected}>
+              <option value="employee">Employee</option>
+              <option value="admin">Help Desk Admin</option>
+            </select>
+
+            {role === 'employee' ? (
+              <div className="emp-picker">
+                <div className="emp-selected" onClick={() => !connected && setShowEmpList(v => !v)}>
+                  {userId
+                    ? <><span className="emp-id-tag">{userId}</span><span className="emp-fullname">{selectedEmp?.employee_name}</span></>
+                    : <span className="emp-placeholder">Select your name...</span>
+                  }
+                  {!connected && <span className="emp-caret">▾</span>}
                 </div>
-              )}
+                {showEmpList && !connected && (
+                  <div className="emp-dropdown">
+                    <input className="emp-search" placeholder="Search name, ID or dept..."
+                      value={empSearch} onChange={e => setEmpSearch(e.target.value)} autoFocus />
+                    <div className="emp-list">
+                      {filteredEmp.map(emp => (
+                        <div key={emp.employee_id}
+                          className={`emp-item ${userId === emp.employee_id ? 'selected' : ''}`}
+                          onClick={() => { setUserId(emp.employee_id); setShowEmpList(false); setEmpSearch('') }}>
+                          <span className="emp-id-tag">{emp.employee_id}</span>
+                          <span className="emp-item-name">{emp.employee_name}</span>
+                          <span className="emp-meta">{emp.department} · {emp.location}</span>
+                        </div>
+                      ))}
+                      {filteredEmp.length === 0 && <div className="emp-loading">No results</div>}
+                    </div>
+                    <button className="emp-close" onClick={() => setShowEmpList(false)}>Close</button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <input className="connect-input" placeholder="Agent ID e.g. HD-NET-001"
+                value={userId} onChange={e => setUserId(e.target.value)}
+                disabled={connected} style={{ flex: 2 }} />
+            )}
+          </div>
+
+          {/* Row 2: password + connect button */}
+          {!connected && (
+            <div className="connect-row-bottom">
+              <div className="pw-field-wrap">
+                <span className="pw-label">🔑 Password</span>
+                <input
+                  className={`pw-input ${pwError ? 'pw-input-error' : ''}`}
+                  type="password"
+                  placeholder="Enter demo password"
+                  value={password}
+                  onChange={e => { setPassword(e.target.value); setPwError('') }}
+                  onKeyDown={e => e.key === 'Enter' && handleConnect()}
+                />
+                {pwError && <span className="pw-error-msg">{pwError}</span>}
+              </div>
+              <button
+                className="btn-connect"
+                onClick={handleConnect}
+                disabled={!ticketId.trim() || !userId.trim() || !password.trim()}
+              >
+                Connect
+              </button>
             </div>
-          ) : (
-            <input className="connect-input" placeholder="Agent ID e.g. HD-NET-001"
-              value={userId} onChange={e => setUserId(e.target.value)} disabled={connected} style={{ flex: 2 }} />
           )}
 
-          {!connected
-            ? <button className="btn-connect" onClick={() => connect()} disabled={!ticketId.trim() || !userId.trim()}>Connect</button>
-            : <button className="btn-disconnect" onClick={disconnect}>✓ Leave</button>
-          }
+          {/* Connected state buttons */}
           {connected && (
-            <button className={`btn-autosolve${solving ? ' solving' : ''}`} onClick={autoSolve} disabled={solving}>
-              {solving ? 'Solving...' : '🤖 Auto-Solve'}
-            </button>
+            <div className="connect-row-bottom">
+              <button className="btn-disconnect" onClick={disconnect}>✓ Leave Chat</button>
+              <button className={`btn-autosolve${solving ? ' solving' : ''}`} onClick={autoSolve} disabled={solving}>
+                {solving ? 'Solving...' : '🤖 Auto-Solve'}
+              </button>
+            </div>
           )}
         </div>
 
@@ -317,7 +376,12 @@ export default function Chat() {
 
         {/* Messages */}
         <div className="chat-messages">
-          {!connected && <div className="chat-placeholder"><div className="ph-icon">💬</div><p>{isAutoOpened ? 'Connecting to your assigned ticket...' : 'Enter your Ticket ID, select your name and click Connect'}</p></div>}
+          {!connected && (
+            <div className="chat-placeholder">
+              <div className="ph-icon">💬</div>
+              <p>{isAutoOpened ? 'Connecting to your assigned ticket...' : 'Fill in the form above and click Connect'}</p>
+            </div>
+          )}
           {connected && messages.length === 0 && <div className="chat-placeholder"><p>Connecting you to a specialist...</p></div>}
           {messages.map((msg, i) => renderMessage(msg, i))}
           <div ref={bottom} />
@@ -327,7 +391,8 @@ export default function Chat() {
         <div className="chat-input-row">
           <textarea className="chat-textarea"
             placeholder={connected ? 'Describe your issue... (Enter to send)' : 'Connect first to chat'}
-            value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} disabled={!connected} rows={1} />
+            value={input} onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKeyDown} disabled={!connected} rows={1} />
           <button className="btn-send" onClick={sendMessage} disabled={!connected || !input.trim()}>Send</button>
         </div>
       </div>

@@ -28,59 +28,52 @@ const PRIORITY_COLORS: Record<string, string> = {
   Critical: '#dc2626', High: '#ea580c', Medium: '#ca8a04', Low: '#16a34a'
 }
 
-const DEMO_PASSWORD = 'helpiq2024'
+const DEMO_PASSWORD = 'abcd'
 
-// ── Louder, sharper beep using Web Audio API ──
 function playNotificationSound(priority: string) {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
     const isUrgent = priority === 'Critical' || priority === 'High'
-    const beepTimes = isUrgent ? [0, 0.18, 0.36] : [0, 0.18]  // 3 beeps urgent, 2 normal
-
+    const beepTimes = isUrgent ? [0, 0.18, 0.36] : [0, 0.18]
     beepTimes.forEach(offset => {
       const osc  = ctx.createOscillator()
       const gain = ctx.createGain()
       osc.connect(gain)
       gain.connect(ctx.destination)
-
-      osc.type = 'square'   // square wave = much louder/sharper than sine
+      osc.type = 'square'
       osc.frequency.value = isUrgent ? 960 : 720
-
       const t = ctx.currentTime + offset
       gain.gain.setValueAtTime(0, t)
-      gain.gain.linearRampToValueAtTime(0.9, t + 0.008)   // fast attack
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14) // short sharp decay
-
+      gain.gain.linearRampToValueAtTime(0.9, t + 0.008)
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14)
       osc.start(t)
       osc.stop(t + 0.15)
     })
-  } catch (e) {
-    console.log('Audio unavailable', e)
-  }
+  } catch {}
 }
 
 export default function AgentDashboard() {
   const navigate = useNavigate()
 
-  // ── Password gate ──
-  const [passwordOk, setPasswordOk]   = useState(false)
-  const [pwInput, setPwInput]         = useState('')
-  const [pwError, setPwError]         = useState('')
-
-  const [loggedIn, setLoggedIn]     = useState(false)
-  const [agentId, setAgentId]       = useState('')
-  const [agentInfo, setAgentInfo]   = useState<any>(null)
-  const [loginError, setLoginError] = useState('')
+  // Login form state
   const [teamFilter, setTeamFilter] = useState('')
+  const [agentId, setAgentId]       = useState('')
+  const [password, setPassword]     = useState('')
+  const [pwError, setPwError]       = useState('')
+  const [pwShake, setPwShake]       = useState(false)
   const [teams, setTeams]           = useState<Team[]>([])
 
+  // After successful login
+  const [loggedIn, setLoggedIn]   = useState(false)
+  const [agentInfo, setAgentInfo] = useState<any>(null)
+
+  // Notifications
   const [notifications, setNotifications] = useState<TicketNotif[]>([])
   const [unread, setUnread]               = useState(0)
   const [wsStatus, setWsStatus] = useState<'offline'|'connecting'|'online'>('offline')
-
-  const [toast, setToast]   = useState<TicketNotif | null>(null)
-  const toastTimer          = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const ws                  = useRef<WebSocket | null>(null)
+  const [toast, setToast]       = useState<TicketNotif | null>(null)
+  const toastTimer              = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const ws                      = useRef<WebSocket | null>(null)
 
   useEffect(() => {
     fetch('http://localhost:8000/api/teams/all')
@@ -94,6 +87,7 @@ export default function AgentDashboard() {
     toastTimer.current = setTimeout(() => setToast(null), 6000)
   }, [])
 
+  // WebSocket for notifications — starts after login
   useEffect(() => {
     if (!loggedIn || !agentId) return
     setWsStatus('connecting')
@@ -131,32 +125,32 @@ export default function AgentDashboard() {
 
   const agentsInTeam = teams.find(t => t.category === teamFilter)?.agents || []
 
-  const handlePasswordSubmit = () => {
-    if (pwInput === DEMO_PASSWORD) {
-      setPasswordOk(true)
-      setPwError('')
-    } else {
-      setPwError('Incorrect password. Try again.')
-      setPwInput('')
-    }
-  }
-
   const handleLogin = () => {
-    if (!agentId.trim()) { setLoginError('Please select an agent'); return }
+    if (!agentId)  return
+    if (password !== DEMO_PASSWORD) {
+      setPwError('Wrong password. Use: abcd')
+      setPwShake(true)
+      setPassword('')
+      setTimeout(() => setPwShake(false), 500)
+      return
+    }
+
     let found: any = null, foundTeam: any = null
     for (const team of teams) {
       const a = team.agents.find(ag => ag.agent_id === agentId)
       if (a) { found = a; foundTeam = team; break }
     }
-    if (!found) { setLoginError('Agent ID not found'); return }
+    if (!found) return
+
     setAgentInfo({ ...found, team_name: foundTeam.team_name, color: foundTeam.color, icon: foundTeam.icon, category: foundTeam.category })
     setLoggedIn(true)
-    setLoginError('')
+    setPwError('')
   }
 
   const handleLogout = () => {
     ws.current?.close()
     setLoggedIn(false); setAgentId(''); setAgentInfo(null)
+    setPassword(''); setPwError('')
     setNotifications([]); setUnread(0); setWsStatus('offline')
   }
 
@@ -174,113 +168,134 @@ export default function AgentDashboard() {
     navigate(`/chat?ticket=${encodeURIComponent(ticketId)}&agent=${encodeURIComponent(agentId)}`)
   }
 
-  // ── PASSWORD SCREEN ──
-  if (!passwordOk) {
-    return (
-      <div className="agent-login-page">
-        <div className="agent-login-card">
-          <div className="login-header">
-            <span style={{ fontSize: '2.5rem' }}>🔒</span>
-            <h1>Agent Portal</h1>
-            <p>This portal is for authorised help desk staff only.<br/>Enter the demo access password to continue.</p>
-          </div>
-          <div className="login-form">
-            <label className="login-label">Demo Password</label>
-            <input
-              className="login-input"
-              type="password"
-              placeholder="Enter password..."
-              value={pwInput}
-              onChange={e => setPwInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handlePasswordSubmit()}
-              autoFocus
-            />
-            {pwError && <div className="login-error">{pwError}</div>}
-            <button className="btn-agent-login" onClick={handlePasswordSubmit} style={{ marginTop: '1.25rem' }}>
-              Unlock Portal →
-            </button>
-            <div className="pw-hint">Hint: <code>helpiq2024</code></div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // ── AGENT SELECT SCREEN ──
+  // ── LOGIN SCREEN ──
   if (!loggedIn) {
+    const selectedAgent = agentsInTeam.find(a => a.agent_id === agentId)
+    const selectedTeam  = teams.find(t => t.category === teamFilter)
+
     return (
       <div className="agent-login-page">
         <div className="agent-login-card">
           <div className="login-header">
             <span style={{ fontSize: '2rem' }}>🛡️</span>
-            <h1>Agent Dashboard</h1>
-            <p>Select your team and name to go online and receive assignments</p>
+            <h1>Agent Portal</h1>
+            <p>Select your team, pick your name, then enter the demo password</p>
           </div>
-          <div className="login-form">
-            <label className="login-label">Select your team</label>
-            <select className="login-select" value={teamFilter}
-              onChange={e => { setTeamFilter(e.target.value); setAgentId('') }}>
-              <option value="">-- Choose team --</option>
-              {teams.map(t => <option key={t.category} value={t.category}>{t.icon} {t.team_name}</option>)}
-            </select>
 
+          <div className="login-form">
+
+            {/* Step 1 — Team */}
+            <div className="login-step">
+              <div className="login-step-num">1</div>
+              <div className="login-step-body">
+                <label className="login-label">Select your team</label>
+                <select className="login-select" value={teamFilter}
+                  onChange={e => { setTeamFilter(e.target.value); setAgentId('') }}>
+                  <option value="">-- Choose team --</option>
+                  {teams.map(t => <option key={t.category} value={t.category}>{t.icon} {t.team_name}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {/* Step 2 — Agent name (appears after team selected) */}
             {teamFilter && (
-              <>
-                <label className="login-label" style={{ marginTop: '1rem' }}>Select your name</label>
-                <div className="agent-pick-list">
-                  {agentsInTeam.map(a => {
-                    const team = teams.find(t => t.category === teamFilter)!
-                    const sc = a.status === 'online' ? '#22c55e' : a.status === 'busy' ? '#f59e0b' : '#9ca3af'
-                    return (
-                      <div key={a.agent_id}
-                        className={`agent-pick-item ${agentId === a.agent_id ? 'selected' : ''} ${a.status === 'offline' ? 'disabled' : ''}`}
-                        onClick={() => a.status !== 'offline' && setAgentId(a.agent_id)}
-                        style={agentId === a.agent_id ? { borderColor: team.color, background: team.color + '08' } : {}}>
-                        <div className="agent-pick-avatar" style={{ background: team.color + '18', color: team.color }}>
-                          {a.name.split(' ').map((n: string) => n[0]).join('')}
+              <div className="login-step">
+                <div className="login-step-num">2</div>
+                <div className="login-step-body">
+                  <label className="login-label">Select your name</label>
+                  <div className="agent-pick-list">
+                    {agentsInTeam.map(a => {
+                      const team = selectedTeam!
+                      const sc = a.status === 'online' ? '#22c55e' : a.status === 'busy' ? '#f59e0b' : '#9ca3af'
+                      return (
+                        <div key={a.agent_id}
+                          className={`agent-pick-item ${agentId === a.agent_id ? 'selected' : ''} ${a.status === 'offline' ? 'disabled' : ''}`}
+                          onClick={() => a.status !== 'offline' && setAgentId(a.agent_id)}
+                          style={agentId === a.agent_id ? { borderColor: team.color, background: team.color + '08' } : {}}>
+                          <div className="agent-pick-avatar" style={{ background: team.color + '18', color: team.color }}>
+                            {a.name.split(' ').map((n: string) => n[0]).join('')}
+                          </div>
+                          <div className="agent-pick-info">
+                            <div className="agent-pick-name">{a.name}</div>
+                            <div className="agent-pick-meta">{a.specialty} · {a.location}</div>
+                          </div>
+                          <div className="agent-pick-status">
+                            <span className="status-dot-sm" style={{ background: sc }} />
+                            <span style={{ fontSize: '0.75rem', color: sc }}>{a.status}</span>
+                          </div>
                         </div>
-                        <div className="agent-pick-info">
-                          <div className="agent-pick-name">{a.name}</div>
-                          <div className="agent-pick-meta">{a.specialty} · {a.location}</div>
-                        </div>
-                        <div className="agent-pick-status">
-                          <span className="status-dot-sm" style={{ background: sc }} />
-                          <span style={{ fontSize: '0.75rem', color: sc }}>{a.status}</span>
-                        </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
                 </div>
-              </>
+              </div>
             )}
 
-            {loginError && <div className="login-error">{loginError}</div>}
-            <button className="btn-agent-login" onClick={handleLogin}
-              disabled={!agentId} style={{ marginTop: '1.25rem' }}>
+            {/* Step 3 — Password (appears after agent selected) */}
+            {agentId && (
+              <div className="login-step">
+                <div className="login-step-num">3</div>
+                <div className="login-step-body">
+                  <label className="login-label">Enter password to confirm</label>
+
+                  {/* Selected agent summary */}
+                  <div className="selected-agent-preview" style={{ borderLeft: `3px solid ${selectedTeam?.color}` }}>
+                    <div className="agent-pick-avatar" style={{ width: 32, height: 32, fontSize: '0.72rem', background: (selectedTeam?.color || '#667eea') + '18', color: selectedTeam?.color }}>
+                      {selectedAgent?.name.split(' ').map((n: string) => n[0]).join('')}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{selectedAgent?.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#888' }}>{selectedTeam?.icon} {selectedTeam?.team_name} · {selectedAgent?.specialty}</div>
+                    </div>
+                  </div>
+
+                  <input
+                    className={`login-pw-input ${pwShake ? 'shake' : ''}`}
+                    type="password"
+                    placeholder="Enter password ()"
+                    value={password}
+                    onChange={e => { setPassword(e.target.value); setPwError('') }}
+                    onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                    autoFocus
+                  />
+                  {pwError && <div className="login-error">{pwError}</div>}
+                </div>
+              </div>
+            )}
+
+            <button
+              className="btn-agent-login"
+              onClick={handleLogin}
+              disabled={!agentId || !password}
+              style={{ marginTop: '1.5rem' }}
+            >
               Go Online →
             </button>
+
+            <div className="pw-hint-line">Demo password for all agents: <code>abcd</code></div>
           </div>
         </div>
       </div>
     )
   }
 
+  // ── DASHBOARD (logged in) ──
   const ticketNotifs = notifications.filter(n => n.type === 'ticket_assigned')
   const urgentNotifs = ticketNotifs.filter(n => n.priority === 'Critical' || n.priority === 'High')
 
   return (
     <div className="agent-dash-page">
 
-      {/* ── TOAST ── */}
+      {/* Toast */}
       {toast && toast.type === 'ticket_assigned' && (
-        <div className={`notif-toast ${toast.priority === 'Critical' || toast.priority === 'High' ? 'toast-urgent' : 'toast-normal'}`}
+        <div className={`notif-toast ${toast.priority === 'Critical' || toast.priority === 'High' ? 'toast-urgent' : ''}`}
           style={{ borderLeft: `4px solid ${toast.color || '#667eea'}` }}>
           <div className="toast-icon">{toast.icon || '🎫'}</div>
           <div className="toast-body">
             <div className="toast-title">New ticket assigned!</div>
             <div className="toast-ticket">{toast.ticket_id}</div>
             <div className="toast-meta">
-              <span className="toast-priority" style={{ color: PRIORITY_COLORS[toast.priority || 'Medium'] }}>● {toast.priority}</span>
+              <span style={{ color: PRIORITY_COLORS[toast.priority || 'Medium'], fontWeight: 600 }}>● {toast.priority}</span>
               <span>{toast.category}</span>
               <span>from {toast.employee_id}</span>
             </div>
