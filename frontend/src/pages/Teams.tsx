@@ -25,7 +25,7 @@ export default function Teams() {
   const [copiedId, setCopiedId]     = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/teams/all')
+    fetch('https://helpdesk-ou5u.onrender.com/api/teams/all')
       .then(r => r.json())
       .then(d => { setTeams(d.teams || []); setLoading(false) })
       .catch(() => setLoading(false))

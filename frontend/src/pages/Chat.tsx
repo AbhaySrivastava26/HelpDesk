@@ -85,7 +85,7 @@ export default function Chat() {
 
   // fetch employees — fallback already set
   useEffect(() => {
-    fetch('http://localhost:8000/api/tickets/employees')
+    fetch('https://helpdesk-ou5u.onrender.com/api/tickets/employees')
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.employees?.length) setEmployees(d.employees) })
       .catch(() => {})
@@ -112,7 +112,7 @@ export default function Chat() {
     setAssignedAgent(null)
     if (rl === 'employee') setSearching(true)
 
-    const socket = new WebSocket(`ws://localhost:8000/api/chat/ws/${tid.trim()}`)
+    const socket = new WebSocket(`wss://helpdesk-ou5u.onrender.com/api/chat/ws/${tid.trim()}`)
     ws.current = socket
 
     socket.onopen = () => {
@@ -192,7 +192,7 @@ export default function Chat() {
       // Step 2: Wait so broadcast reaches employee before we delete
       await new Promise(r => setTimeout(r, 1000))
       // Step 3: Delete from DB
-      await fetch(`http://localhost:8000/api/tickets/${ticketId}/close`, {
+      await fetch(`https://helpdesk-ou5u.onrender.com/api/tickets/${ticketId}/close`, {
         method: 'DELETE'
       })
       // Step 4: Agent side shows closed screen too
@@ -225,7 +225,7 @@ export default function Chat() {
     setSolving(true)
     const ctx = messages.filter(m => m.type === 'message').slice(-5).map(m => `${m.sender_role}: ${m.text}`).join('\n')
     try {
-      const res = await fetch('http://localhost:8000/api/tickets/auto-solve', {
+      const res = await fetch('https://helpdesk-ou5u.onrender.com/api/tickets/auto-solve', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticket_id: ticketId, issue_context: ctx || 'No context', employee_id: userId })
       })

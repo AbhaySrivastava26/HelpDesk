@@ -76,7 +76,7 @@ export default function AgentDashboard({ onLogin }: { onLogin?: () => void }) {
   const ws                      = useRef<WebSocket | null>(null)
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/teams/all')
+    fetch('https://helpdesk-ou5u.onrender.com/api/teams/all')
       .then(r => r.json()).then(d => setTeams(d.teams || []))
       .catch(() => {})
   }, [])
@@ -91,7 +91,7 @@ export default function AgentDashboard({ onLogin }: { onLogin?: () => void }) {
   useEffect(() => {
     if (!loggedIn || !agentId) return
     setWsStatus('connecting')
-    const socket = new WebSocket(`ws://localhost:8000/api/notifications/ws/${agentId}`)
+    const socket = new WebSocket(`wss://helpdesk-ou5u.onrender.com/api/notifications/ws/${agentId}`)
     ws.current = socket
 
     socket.onopen = () => {

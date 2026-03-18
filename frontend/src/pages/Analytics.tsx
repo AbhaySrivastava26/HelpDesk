@@ -12,10 +12,10 @@ export default function Analytics() {
     const fetchAnalytics = async () => {
       try {
         const [c, d, l, p] = await Promise.all([
-          fetch('http://localhost:8000/api/analytics/by-category').then(r => r.json()),
-          fetch('http://localhost:8000/api/analytics/by-department').then(r => r.json()),
-          fetch('http://localhost:8000/api/analytics/by-location').then(r => r.json()),
-          fetch('http://localhost:8000/api/analytics/by-priority').then(r => r.json()),
+          fetch('https://helpdesk-ou5u.onrender.com/api/analytics/by-category').then(r => r.json()),
+          fetch('https://helpdesk-ou5u.onrender.com/api/analytics/by-department').then(r => r.json()),
+          fetch('https://helpdesk-ou5u.onrender.com/api/analytics/by-location').then(r => r.json()),
+          fetch('https://helpdesk-ou5u.onrender.com/api/analytics/by-priority').then(r => r.json()),
         ])
         
         setCategory(c.data || [])

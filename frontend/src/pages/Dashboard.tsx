@@ -44,7 +44,7 @@ export default function Dashboard() {
 
   const fetchTickets = useCallback(async () => {
     try {
-      const res  = await fetch('http://localhost:8000/api/tickets/all')
+      const res  = await fetch('https://helpdesk-ou5u.onrender.com/api/tickets/all')
       const data = await res.json()
       setTickets(data.tickets || [])
     } catch (e) {
@@ -63,7 +63,7 @@ export default function Dashboard() {
 
   const updateStatus = async (ticketId: string, newStatus: string) => {
     try {
-      await fetch(`http://localhost:8000/api/tickets/${ticketId}`, {
+      await fetch(`https://helpdesk-ou5u.onrender.com/api/tickets/${ticketId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
