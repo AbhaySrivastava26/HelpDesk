@@ -1,0 +1,50 @@
+.dd-page { min-height: 100vh; background: var(--bg); color: var(--text); }
+.dd-container { max-width: 1320px; margin: 0 auto; padding: 0 24px; }
+.dd-header { background: var(--card); border-bottom: 1px solid var(--border); }
+.dd-header-inner { padding: 24px 0; }
+.dd-brand { margin: 0 0 8px 0; font-size: 11px; font-weight: 700; letter-spacing: .25em; color: var(--accent); text-transform: uppercase; }
+.dd-title-row { display: flex; align-items: center; gap: 12px; }
+.dd-title-row h1 { margin: 0; font-size: 1.6rem; font-weight: 600; color: var(--text); }
+.dd-title-icon { width: 24px; height: 24px; color: var(--accent); }
+.dd-subtitle { margin-top: 8px; font-size: .875rem; color: var(--text-muted); max-width: 820px; }
+.dd-main { padding-top: 28px; padding-bottom: 32px; }
+.dd-summary-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
+.dd-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); transition: var(--transition); }
+.dd-card:hover { box-shadow: var(--shadow-md); border-color: var(--border-md); }
+.dd-summary-card { padding: 18px; }
+.dd-summary-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.dd-summary-label { margin: 0; color: var(--text-muted); font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.dd-summary-value { margin: 10px 0 6px 0; font-size: 2rem; font-weight: 600; color: var(--accent); line-height: 1; }
+.dd-summary-note { margin: 0; color: var(--text-muted); font-size: .78rem; line-height: 1.5; }
+.dd-icon-box { width: 40px; height: 40px; border-radius: var(--radius-sm); background: var(--accent-soft); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dd-icon { width: 18px; height: 18px; color: var(--accent); }
+.dd-hero-grid { margin-top: 20px; display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
+.dd-hero-card { padding: 20px; }
+.dd-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 20px 20px 0; }
+.dd-card-header h3 { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text); }
+.dd-card-header p { margin: 4px 0 0; color: var(--text-muted); font-size: .8rem; }
+.dd-story-list { margin: 16px 20px 20px; padding-left: 18px; color: var(--text); line-height: 1.7; font-size: .875rem; }
+.dd-story-list li+li { margin-top: 8px; }
+.dd-mini-grid { margin: 16px 20px 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.dd-mini-stat { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; background: var(--bg); }
+.dd-mini-label { display: block; font-size: .75rem; color: var(--text-muted); margin-bottom: 6px; }
+.dd-mini-stat strong { font-size: 1.5rem; font-weight: 600; color: var(--accent); }
+.dd-callout { margin: 14px 20px 20px; border: 1px solid var(--border-md); background: var(--accent-soft); color: var(--accent-dark); border-radius: var(--radius-md); padding: 14px; line-height: 1.6; font-size: .82rem; }
+.dd-chart-grid { margin-top: 20px; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.dd-bar-list { margin: 16px 20px 20px; }
+.dd-bar-item+.dd-bar-item { margin-top: 14px; }
+.dd-bar-meta { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; font-size: .82rem; }
+.dd-bar-label { font-weight: 500; color: var(--text); }
+.dd-bar-value { color: var(--text-muted); }
+.dd-bar-track { width: 100%; height: 8px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.dd-bar-fill { height: 100%; border-radius: 99px; background: var(--accent); opacity: .85; }
+.dd-bottom-grid { margin-top: 20px; display: grid; grid-template-columns: 1.05fr 1.4fr; gap: 16px; }
+.dd-table-wrap { margin: 14px 20px 20px; overflow-x: auto; }
+.dd-table { width: 100%; border-collapse: collapse; }
+.dd-table th, .dd-table td { padding: 10px 10px; text-align: left; border-top: 1px solid var(--border); font-size: .82rem; }
+.dd-table th { color: var(--text-muted); font-weight: 600; background: var(--bg); font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
+.dd-table td { color: var(--text); }
+.dd-table-tight th, .dd-table-tight td { white-space: nowrap; }
+.dd-table tbody tr:hover { background: var(--card-hover); }
+@media(max-width:1100px){.dd-summary-grid,.dd-chart-grid,.dd-bottom-grid,.dd-hero-grid{grid-template-columns:1fr}}
+@media(max-width:700px){.dd-container{padding:0 16px}.dd-title-row h1{font-size:1.3rem}.dd-summary-grid{grid-template-columns:1fr}.dd-mini-grid{grid-template-columns:1fr}}
