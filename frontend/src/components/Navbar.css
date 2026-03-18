@@ -1,36 +1,72 @@
 .navbar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 1rem 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: var(--nav);
+  height: 58px;
+  padding: 0 2rem;
+  position: sticky; top: 0; z-index: 200;
+  box-shadow: 0 1px 0 rgba(255,255,255,.06), 0 2px 12px rgba(0,0,0,.15);
 }
-
 .nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  max-width: 1200px; margin: 0 auto; height: 100%;
+  display: flex; align-items: center; gap: 1rem;
 }
 
+/* Logo */
 .nav-logo {
-  color: white;
-  font-size: 1.5rem;
-  font-weight: bold;
-  text-decoration: none;
+  display: flex; align-items: center; gap: 8px;
+  color: #fff; text-decoration: none;
+  font-size: 1.05rem; font-weight: 600; letter-spacing: -.01em;
+  flex-shrink: 0;
 }
+.nav-logo svg { flex-shrink: 0; }
+.nav-logo span { color: rgba(255,255,255,.7); font-weight: 400; margin-left: 2px; }
 
-.nav-menu {
-  display: flex;
-  gap: 2rem;
-}
-
+/* Links */
+.nav-menu { display: flex; align-items: center; gap: 2px; flex: 1; }
 .nav-link {
-  color: white;
+  display: flex; align-items: center; gap: 6px;
+  color: rgba(204,251,241,.75);
   text-decoration: none;
-  font-weight: 500;
-  transition: 0.2s;
+  font-size: .85rem; font-weight: 500;
+  padding: 6px 11px; border-radius: var(--radius-sm);
+  transition: var(--transition); white-space: nowrap;
 }
+.nav-link svg { opacity: .7; transition: var(--transition); }
+.nav-link:hover { color: #fff; background: rgba(255,255,255,.08); }
+.nav-link:hover svg { opacity: 1; }
+.nav-link.active { color: #fff; background: rgba(255,255,255,.13); }
+.nav-link.active svg { opacity: 1; }
 
-.nav-link:hover {
-  opacity: 0.8;
+/* Role picker */
+.nav-role-picker {
+  display: flex; align-items: center; gap: 10px; margin-left: auto;
 }
+.nav-role-label { color: rgba(204,251,241,.6); font-size: .82rem; }
+.nav-role-btn {
+  padding: 6px 16px; border-radius: 99px;
+  border: 1.5px solid rgba(255,255,255,.25);
+  background: transparent; color: rgba(255,255,255,.85);
+  font-size: .82rem; font-weight: 500;
+  cursor: pointer; transition: var(--transition);
+  display: flex; align-items: center; gap: 6px;
+}
+.nav-role-btn:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.55); color: #fff; }
+.nav-role-btn svg { width: 14px; height: 14px; }
+
+/* Right side badge + switch */
+.nav-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.nav-badge {
+  font-size: .75rem; font-weight: 500;
+  padding: 3px 10px; border-radius: 99px;
+  display: flex; align-items: center; gap: 5px;
+}
+.nav-badge.employee { background: rgba(13,148,136,.25); color: #99f6e4; }
+.nav-badge.agent    { background: rgba(204,251,241,.15); color: #ccfbf1; }
+.nav-badge svg { width: 12px; height: 12px; }
+
+.nav-switch {
+  font-size: .75rem; color: rgba(204,251,241,.55);
+  background: transparent; border: 1px solid rgba(255,255,255,.15);
+  border-radius: var(--radius-sm); padding: 4px 10px;
+  cursor: pointer; transition: var(--transition);
+}
+.nav-switch:hover { color: #fff; border-color: rgba(255,255,255,.4); }

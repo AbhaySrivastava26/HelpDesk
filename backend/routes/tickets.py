@@ -146,3 +146,37 @@ def auto_solve_ticket(request: dict):
         "solution":     solution,
         "generated_by": "AI Assistant"
     }
+    
+    
+    
+    
+    #newendpoint
+    
+    # ── Add this to backend/routes/tickets.py ──
+# Paste after your existing @router.put("/{ticket_id}") endpoint
+
+@router.delete("/{ticket_id}/close")
+def close_ticket(ticket_id: str):
+    """
+    Permanently closes a ticket and removes it from the active list.
+    Called when user clicks 'Close Ticket' in the chat.
+    """
+    db = get_db()
+    if db is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail="Database unavailable")
+
+    # Check ticket exists first
+    ticket = db.tickets.find_one({"ticket_id": ticket_id})
+    if not ticket:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    # Hard delete — permanently removes from DB
+    db.tickets.delete_one({"ticket_id": ticket_id})
+
+    return {
+        "success":   True,
+        "ticket_id": ticket_id,
+        "message":   f"Ticket {ticket_id} has been closed and removed."
+    }

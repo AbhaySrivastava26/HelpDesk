@@ -65,7 +65,11 @@ async def agent_notification_ws(websocket: WebSocket, agent_id: str):
             raw  = await websocket.receive_text()
             data = json.loads(raw)
 
-            if data.get("type") == "ack":
+            if data.get("type") == "ping":
+                # Keepalive — just pong back
+                await websocket.send_text(json.dumps({"type": "pong"}))
+
+            elif data.get("type") == "ack":
                 # Agent acknowledged a notification
                 ticket_id = data.get("ticket_id")
                 await websocket.send_text(json.dumps({

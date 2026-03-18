@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import './Chat.css'
 
 interface Message {
-  type: 'message' | 'system' | 'auto_solve' | 'agent_joined'
+  type: 'message' | 'system' | 'auto_solve' | 'agent_joined' | 'ticket_closed'
   sender_id?: string
   sender_role?: string
   text: string
@@ -66,6 +66,9 @@ export default function Chat() {
   const [solving, setSolving]     = useState(false)
   const [searching, setSearching] = useState(false)
   const [assignedAgent, setAssignedAgent] = useState<any>(null)
+  const [showCloseModal, setShowCloseModal] = useState(false)
+  const [closing, setClosing]               = useState(false)
+  const [ticketClosed, setTicketClosed]     = useState(false)
 
   // ── employee picker ──
   const [employees, setEmployees]     = useState<Employee[]>(FALLBACK_EMP)
@@ -125,6 +128,17 @@ export default function Chat() {
           setSearching(false)
           setAssignedAgent({ agent_id: msg.agent_id, agent_name: msg.agent_name, team_name: msg.team_name, specialty: msg.specialty, color: msg.color, icon: msg.icon })
         }
+        // If ticket was closed by the agent, employee gets this and sees closed screen
+        if (msg.type === 'ticket_closed') {
+          setMessages(prev => [...prev, msg])
+          setTimeout(() => {
+            setTicketClosed(true)
+            session.current = ''
+            if (ws.current) { ws.current.close(); ws.current = null }
+            setConnected(false)
+          }, 2500) // 2.5s delay so employee reads the message first
+          return
+        }
         setMessages(prev => [...prev, msg])
       } catch {}
     }
@@ -164,6 +178,37 @@ export default function Chat() {
     setPassword(''); setPwError('')
   }
 
+  const closeTicket = async () => {
+    if (!ticketId || closing) return
+    setClosing(true)
+    try {
+      // Step 1: Broadcast ticket_closed to ALL in room FIRST (employee sees it instantly)
+      if (ws.current?.readyState === WebSocket.OPEN) {
+        ws.current.send(JSON.stringify({
+          type:      'ticket_closed',
+          closed_by: userId
+        }))
+      }
+      // Step 2: Wait so broadcast reaches employee before we delete
+      await new Promise(r => setTimeout(r, 1000))
+      // Step 3: Delete from DB
+      await fetch(`http://localhost:8000/api/tickets/${ticketId}/close`, {
+        method: 'DELETE'
+      })
+      // Step 4: Agent side shows closed screen too
+      setTicketClosed(true)
+      session.current = ''
+      ws.current?.close(); ws.current = null
+      setConnected(false)
+    } catch (e) {
+      console.error('Close ticket failed', e)
+    } finally {
+      setClosing(false)
+      setShowCloseModal(false)
+    }
+  }
+
+
   const sendMessage = () => {
     const text = input.trim()
     if (!text || !connected || ws.current?.readyState !== WebSocket.OPEN) return
@@ -197,6 +242,16 @@ export default function Chat() {
     const isMe = msg.sender_id === userId
     if (msg.type === 'system') return (
       <div key={idx} className="msg-system"><span>{msg.text}</span></div>
+    )
+    if (msg.type === 'ticket_closed') return (
+      <div key={idx} className="msg-ticket-closed">
+        <div className="closed-broadcast-icon">🔒</div>
+        <div className="closed-broadcast-body">
+          <div className="closed-broadcast-title">Ticket Closed</div>
+          <div className="closed-broadcast-text">{msg.text}</div>
+          <div className="closed-broadcast-time">{msg.timestamp}</div>
+        </div>
+      </div>
     )
     if (msg.type === 'agent_joined') return (
       <div key={idx} className="msg-agent-joined" style={{ borderColor: msg.color || '#667eea' }}>
@@ -336,9 +391,12 @@ export default function Chat() {
           {/* Connected state buttons */}
           {connected && (
             <div className="connect-row-bottom">
-              <button className="btn-disconnect" onClick={disconnect}>✓ Leave Chat</button>
+              <button className="btn-disconnect" onClick={disconnect}>Leave Chat</button>
               <button className={`btn-autosolve${solving ? ' solving' : ''}`} onClick={autoSolve} disabled={solving}>
                 {solving ? 'Solving...' : '🤖 Auto-Solve'}
+              </button>
+              <button className="btn-close-ticket" onClick={() => setShowCloseModal(true)}>
+                ✅ Close Ticket
               </button>
             </div>
           )}
@@ -374,27 +432,74 @@ export default function Chat() {
           </div>
         )}
 
+        {/* ── Ticket closed success screen ── */}
+        {ticketClosed && (
+          <div className="ticket-closed-screen">
+            <div className="closed-icon">{role === 'admin' ? '✅' : '🎉'}</div>
+            <h2>{role === 'admin' ? 'Ticket Closed' : 'Your issue has been resolved!'}</h2>
+            <p>
+              {role === 'admin'
+                ? <>Ticket <strong>{ticketId}</strong> has been closed and removed from the dashboard.</>
+                : <>The support agent has closed ticket <strong>{ticketId}</strong>. Your issue has been marked as resolved.</>
+              }
+            </p>
+            <p className="closed-sub">
+              {role === 'admin'
+                ? 'You can now return to your portal to handle the next ticket.'
+                : 'If your issue persists, you can submit a new ticket at any time.'
+              }
+            </p>
+            {role === 'admin'
+              ? <button className="btn-new-ticket" onClick={() => window.location.href = '/agent'}>← Back to Agent Portal</button>
+              : <button className="btn-new-ticket" onClick={() => window.location.href = '/'}>Submit a New Ticket</button>
+            }
+          </div>
+        )}
+
         {/* Messages */}
-        <div className="chat-messages">
-          {!connected && (
-            <div className="chat-placeholder">
-              <div className="ph-icon">💬</div>
-              <p>{isAutoOpened ? 'Connecting to your assigned ticket...' : 'Fill in the form above and click Connect'}</p>
-            </div>
-          )}
-          {connected && messages.length === 0 && <div className="chat-placeholder"><p>Connecting you to a specialist...</p></div>}
-          {messages.map((msg, i) => renderMessage(msg, i))}
-          <div ref={bottom} />
-        </div>
+        {!ticketClosed && (
+          <div className="chat-messages">
+            {!connected && (
+              <div className="chat-placeholder">
+                <div className="ph-icon">💬</div>
+                <p>{isAutoOpened ? 'Connecting to your assigned ticket...' : 'Fill in the form above and click Connect'}</p>
+              </div>
+            )}
+            {connected && messages.length === 0 && <div className="chat-placeholder"><p>Connecting you to a specialist...</p></div>}
+            {messages.map((msg, i) => renderMessage(msg, i))}
+            <div ref={bottom} />
+          </div>
+        )}
 
         {/* Input */}
-        <div className="chat-input-row">
-          <textarea className="chat-textarea"
-            placeholder={connected ? 'Describe your issue... (Enter to send)' : 'Connect first to chat'}
-            value={input} onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKeyDown} disabled={!connected} rows={1} />
-          <button className="btn-send" onClick={sendMessage} disabled={!connected || !input.trim()}>Send</button>
-        </div>
+        {!ticketClosed && (
+          <div className="chat-input-row">
+            <textarea className="chat-textarea"
+              placeholder={connected ? 'Describe your issue... (Enter to send)' : 'Connect first to chat'}
+              value={input} onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKeyDown} disabled={!connected} rows={1} />
+            <button className="btn-send" onClick={sendMessage} disabled={!connected || !input.trim()}>Send</button>
+          </div>
+        )}
+
+        {/* ── Close Ticket Confirmation Modal ── */}
+        {showCloseModal && (
+          <div className="modal-overlay" onClick={() => setShowCloseModal(false)}>
+            <div className="modal-card" onClick={e => e.stopPropagation()}>
+              <div className="modal-icon">🔒</div>
+              <h3>Close this ticket?</h3>
+              <p>This will permanently close ticket <strong>{ticketId}</strong> and remove it from the dashboard. This cannot be undone.</p>
+              <div className="modal-actions">
+                <button className="btn-modal-cancel" onClick={() => setShowCloseModal(false)}>
+                  Cancel
+                </button>
+                <button className="btn-modal-confirm" onClick={closeTicket} disabled={closing}>
+                  {closing ? 'Closing...' : 'Yes, Close Ticket'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

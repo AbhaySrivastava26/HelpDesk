@@ -52,7 +52,7 @@ function playNotificationSound(priority: string) {
   } catch {}
 }
 
-export default function AgentDashboard() {
+export default function AgentDashboard({ onLogin }: { onLogin?: () => void }) {
   const navigate = useNavigate()
 
   // Login form state
@@ -94,7 +94,18 @@ export default function AgentDashboard() {
     const socket = new WebSocket(`ws://localhost:8000/api/notifications/ws/${agentId}`)
     ws.current = socket
 
-    socket.onopen = () => setWsStatus('online')
+    socket.onopen = () => {
+      setWsStatus('online')
+      console.log(`Agent ${agentId} notification WS connected`)
+      // Send keepalive ping every 20s to prevent connection dropping
+      const ping = setInterval(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: 'ping' }))
+        } else {
+          clearInterval(ping)
+        }
+      }, 20000)
+    }
     socket.onmessage = (e) => {
       try {
         const msg: TicketNotif = JSON.parse(e.data)
@@ -145,6 +156,7 @@ export default function AgentDashboard() {
     setAgentInfo({ ...found, team_name: foundTeam.team_name, color: foundTeam.color, icon: foundTeam.icon, category: foundTeam.category })
     setLoggedIn(true)
     setPwError('')
+    onLogin?.()   // tell App.tsx this is now an agent session
   }
 
   const handleLogout = () => {
@@ -252,7 +264,7 @@ export default function AgentDashboard() {
                   <input
                     className={`login-pw-input ${pwShake ? 'shake' : ''}`}
                     type="password"
-                    placeholder="Enter password ()"
+                    placeholder="Enter password (abcd)"
                     value={password}
                     onChange={e => { setPassword(e.target.value); setPwError('') }}
                     onKeyDown={e => e.key === 'Enter' && handleLogin()}
